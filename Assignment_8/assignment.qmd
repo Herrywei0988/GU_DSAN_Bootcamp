@@ -1,0 +1,426 @@
+---
+title: "Assignment 8"
+subtitle: "DSAN Bootcamp 2024"
+output: html
+---
+
+## Problem 1: `ggplot`
+
+### Question 1.1
+
+Produce 5 different types of data visualizations using `ggplot`
+
+* Produce the plots using stock prices. Please produce a graph that is meaningful in comparing certain stock prices as I have done in the lecture. I was comparing the stock prices of the Big Tech Companies. Please try to choose different stocks than what I have used in the lecture note.
+
+To find the ticker of the stock to be used in `getSymbols()` in `quantmod` package; you can google the company stock and it will show you the ticker for that particular stock.
+
+![](stock.png)
+
+```{r}
+#| label: q1.1-response
+# Your code here
+
+# Install and load necessary packages
+if (!requireNamespace("quantmod", quietly = TRUE)) install.packages("quantmod")
+if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
+if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+if (!requireNamespace("tidyr", quietly = TRUE)) install.packages("tidyr")
+
+library(quantmod)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# Define the stock tickers you want to compare
+tickers <- c("AAPL", "MSFT", "GOOG", "AMZN", "META")  # Updated ticker for Facebook
+
+# Fetch the stock prices and handle potential errors
+getSymbols(tickers, src = "yahoo", from = "2022-01-01", to = "2023-01-01", auto.assign = TRUE)
+
+# Combine the adjusted closing prices into a single data frame
+stock_data <- do.call(merge, lapply(tickers, function(ticker) {
+  tryCatch({
+    Ad(get(ticker))
+  }, error = function(e) {
+    NULL
+  })
+}))
+
+# Remove any columns that are NULL (failed fetch)
+stock_data <- stock_data[ , colSums(is.na(stock_data)) == 0]
+
+# Ensure column names match tickers for remaining data
+colnames(stock_data) <- colnames(stock_data)
+
+# Convert to long format for ggplot
+stock_data_long <- stock_data %>%
+  as.data.frame() %>%
+  mutate(Date = index(stock_data)) %>%
+  pivot_longer(-Date, names_to = "Stock", values_to = "Price")
+
+# 1. Line plot of stock prices over time
+line_plot <- ggplot(stock_data_long, aes(x = Date, y = Price, color = Stock)) +
+  geom_line() +
+  labs(title = "Stock Prices Over Time", x = "Date", y = "Price")
+
+# 2. Histogram of stock prices
+hist_plot <- ggplot(stock_data_long, aes(x = Price, fill = Stock)) +
+  geom_histogram(position = "dodge", bins = 30) +
+  labs(title = "Distribution of Stock Prices", x = "Price", y = "Frequency")
+
+# 3. Box plot of stock prices
+box_plot <- ggplot(stock_data_long, aes(x = Stock, y = Price, fill = Stock)) +
+  geom_boxplot() +
+  labs(title = "Box Plot of Stock Prices", x = "Stock", y = "Price")
+
+# 4. Density plot of stock prices
+density_plot <- ggplot(stock_data_long, aes(x = Price, fill = Stock)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Density Plot of Stock Prices", x = "Price", y = "Density")
+
+# 5. Scatter plot of stock prices between two stocks
+# Make sure AAPL and MSFT exist in the data
+if ("AAPL" %in% colnames(stock_data) && "MSFT" %in% colnames(stock_data)) {
+  scatter_plot <- ggplot(stock_data, aes(x = AAPL, y = MSFT)) +
+    geom_point() +
+    labs(title = "Scatter Plot of AAPL vs MSFT", x = "AAPL Price", y = "MSFT Price")
+  print(scatter_plot)
+}
+
+# Print the other plots
+print(line_plot)
+print(hist_plot)
+print(box_plot)
+print(density_plot)
+
+
+
+```
+
+For the rest of the plots, Use the _**Sales.data dataset**_ that you created in Part 2 of Assignment 6 to provide more meaningful plots. Most of the plots should be of a different kind (bar, line, scatter, etc.). That means don't provide all of them as line graphs. :)
+
+### Question 1.2
+
+```{r}
+#| label: q1.2-response
+# place visualization #2 here
+
+setwd("D:/Users/Herry/Downloads/YungHan_Wei_Assignment 6/assignment")
+
+# Load necessary libraries
+if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
+if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+
+library(ggplot2)
+library(dplyr)
+
+# Read the CSV file into a data frame
+Sales.data <- read.csv("Global_Superstore_Orders_2016.csv")
+
+# Inspect the first few rows of the dataset
+head(Sales.data)
+
+# Bar Plot - Total sales per product
+bar_plot <- ggplot(Sales.data, aes(x = Product.Name, y = Sales, fill = Product.Name)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Total Sales per Product", x = "Product", y = "Sales")
+
+print(bar_plot)
+
+```
+
+### Question 1.3
+
+```{r}
+#| label: q1.3-response
+# place visualization #3 here
+
+setwd("D:/Users/Herry/Downloads/YungHan_Wei_Assignment 6/assignment")
+
+# Load necessary libraries
+if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
+if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+
+library(ggplot2)
+library(dplyr)
+
+# Read the CSV file into a data frame
+Sales.data <- read.csv("Global_Superstore_Orders_2016.csv")
+
+# Inspect the first few rows of the dataset
+head(Sales.data)
+
+# Convert the Date column to Date type if it's not already
+Sales.data$Order.Date <- as.Date(Sales.data$Order.Date, format = "%m/%d/%Y")
+
+# Line Plot - Sales over time
+line_plot <- ggplot(Sales.data, aes(x = Order.Date, y = Sales, color = Product.Name)) +
+  geom_line() +
+  labs(title = "Sales Over Time", x = "Date", y = "Sales")
+
+print(line_plot)
+```
+
+### Question 1.4
+
+```{r}
+#| label: q1.4-response
+# place visualization #4 here
+
+setwd("D:/Users/Herry/Downloads/YungHan_Wei_Assignment 6/assignment")
+
+# Load necessary libraries
+if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
+if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+
+library(ggplot2)
+library(dplyr)
+
+# Read the CSV file into a data frame
+Sales.data <- read.csv("Global_Superstore_Orders_2016.csv")
+
+# Inspect the first few rows of the dataset
+head(Sales.data)
+
+# Scatter Plot - Sales vs Profit
+scatter_plot <- ggplot(Sales.data, aes(x = Sales, y = Profit, color = Product.Name)) +
+  geom_point() +
+  labs(title = "Sales vs Profit", x = "Sales", y = "Profit")
+
+print(scatter_plot)
+```
+
+### Question 1.5
+
+```{r}
+#| label: q1.5-response
+# place visualization #5 here
+
+setwd("D:/Users/Herry/Downloads/YungHan_Wei_Assignment 6/assignment")
+
+# Load necessary libraries
+if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
+if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+
+library(ggplot2)
+library(dplyr)
+
+# Read the CSV file into a data frame
+Sales.data <- read.csv("Global_Superstore_Orders_2016.csv")
+
+# Inspect the first few rows of the dataset
+head(Sales.data)
+
+# Box Plot - Sales distribution by Product
+box_plot <- ggplot(Sales.data, aes(x = Product.Name, y = Sales, fill = Product.Name)) +
+  geom_boxplot() +
+  labs(title = "Sales Distribution by Product", x = "Product", y = "Sales") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(box_plot)
+```
+
+## Problem 2: Wordclouds
+
+### Question 2.1
+
+Produce a wordcloud using the Harry Potter Corpus (the text files within the `HP_Corpus` directory). Write one or two sentences explaining what you observe by this wordcloud.
+
+```{r}
+#| label: q2.1-response
+# insert code here
+
+# Load necessary libraries
+if (!requireNamespace("tm", quietly = TRUE)) install.packages("tm")
+if (!requireNamespace("wordcloud", quietly = TRUE)) install.packages("wordcloud")
+if (!requireNamespace("RColorBrewer", quietly = TRUE)) install.packages("RColorBrewer")
+
+library(tm)
+library(wordcloud)
+library(RColorBrewer)
+
+# Define the path to the text files
+corpus_path <- "D:/Users/Herry/Downloads/assignment (3)/assignment/HP_Corpus"
+
+# Check if the directory is not empty
+if (length(list.files(corpus_path)) == 0) {
+  stop("The directory is empty. Please check the path and ensure it contains text files.")
+}
+
+# Read the text files
+corpus <- VCorpus(DirSource(corpus_path, encoding = "UTF-8"))
+
+# Preprocess the text data
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, removeWords, stopwords("en"))
+corpus <- tm_map(corpus, stripWhitespace)
+
+# Create a Term-Document Matrix
+tdm <- TermDocumentMatrix(corpus)
+m <- as.matrix(tdm)
+word_freqs <- sort(rowSums(m), decreasing = TRUE)
+word_freqs_df <- data.frame(word = names(word_freqs), freq = word_freqs)
+
+# Generate the word cloud
+set.seed(1234)
+wordcloud(words = word_freqs_df$word, freq = word_freqs_df$freq, min.freq = 3,
+          max.words = 200, random.order = FALSE, rot.per = 0.35, 
+          colors = brewer.pal(8, "Dark2"))
+
+```
+
+> The word cloud reveals that the most frequent words in the Harry Potter Corpus are "Harry", "said", "Hermione", "Ron", and "Hagrid". This indicates that the central characters and dialogue play a significant role in the text. Additionally, the prominence of these names reflects their importance in the storyline.
+
+
+### Question 2.2
+
+Using the Harry Potter Corpus, which are the top five most used words in the corpus after stop words were removed? 
+
+>cat( 1. Harry 2. Said 3. Hermione 4. Ron 5. Hagrid)
+
+### Question 2.3
+
+Whose name appears more frequently in the Harry Potter Corpus, Ron's or Hermione's? 
+
+```{r}
+# Get the frequency of Ron and Hermione
+ron_freq <- word_freqs_df[word_freqs_df$word == "ron", "freq"]
+hermione_freq <- word_freqs_df[word_freqs_df$word == "hermione", "freq"]
+
+# Print the frequencies
+print(paste("Ron appears", ron_freq, "times."))
+print(paste("Hermione appears", hermione_freq, "times."))
+
+# Compare frequencies
+if (ron_freq > hermione_freq) {
+  print("Ron's name appears more frequently than Hermione's.")
+} else if (ron_freq < hermione_freq) {
+  print("Hermione's name appears more frequently than Ron's.")
+} else {
+  print("Ron and Hermione's names appear with the same frequency.")
+}
+```
+
+> cat(Ron) 
+
+## Problem 3: APIs
+
+Watch this video on Mixtape Medley with Ariana Grande and Kelly Clarkson in Jimmy Fallon's Show.
+<https://www.youtube.com/watch?v=LF_EF8Rj9gs>
+
+Use Spotify's API to do a comparison between Ariana Grande's and Kelly Clarkson's music using several data visualization.
+```{r}
+#| label: q3-response
+# insert code here
+
+library(spotifyr)
+
+client_id <- '9cc6f7270abf42748500287f38cb327f'
+client_secret <- 'fff19a0bbf054690b48bcb20667a5d54'
+
+Sys.setenv(SPOTIFY_CLIENT_ID = client_id)
+Sys.setenv(SPOTIFY_CLIENT_SECRET = client_secret)
+
+access_token <- get_spotify_access_token()
+
+library(spotifyr)
+library(dplyr)
+
+get_artist_tracks <- function(artist_name) {
+  artist <- search_spotify(artist_name, type = 'artist')
+  if (length(artist$id) == 0) {
+    stop("Artist not found")
+  }
+  
+  artist_id <- artist$id[1]
+  
+  albums <- get_artist_albums(artist_id, include_groups = 'album')
+  if (nrow(albums) == 0) {
+    stop("No albums found for artist")
+  }
+  
+  album_ids <- albums$id
+  
+  tracks <- list()
+  for (album_id in album_ids) {
+    album_tracks <- get_album_tracks(album_id)
+    tracks <- append(tracks, list(album_tracks))
+  }
+  
+  tracks <- bind_rows(tracks)
+  return(tracks)
+}
+
+ariana_tracks <- tryCatch({
+  get_artist_tracks('Ariana Grande')
+}, error = function(e) {
+  cat("Error in getting Ariana Grande's tracks: ", e$message, "\n")
+  NULL
+})
+
+kelly_tracks <- tryCatch({
+  get_artist_tracks('Kelly Clarkson')
+}, error = function(e) {
+  cat("Error in getting Kelly Clarkson's tracks: ", e$message, "\n")
+  NULL
+})
+
+get_track_features <- function(track_ids) {
+  if (is.null(track_ids) || length(track_ids) == 0) {
+    stop("No track IDs provided")
+  }
+  features <- get_track_audio_features(track_ids)
+  return(features)
+}
+
+ariana_features <- tryCatch({
+  if (!is.null(ariana_tracks)) {
+    get_track_features(ariana_tracks$id)
+  } else {
+    NULL
+  }
+}, error = function(e) {
+  cat("Error in getting Ariana Grande's track features: ", e$message, "\n")
+  NULL
+})
+
+kelly_features <- tryCatch({
+  if (!is.null(kelly_tracks)) {
+    get_track_features(kelly_tracks$id)
+  } else {
+    NULL
+  }
+}, error = function(e) {
+  cat("Error in getting Kelly Clarkson's track features: ", e$message, "\n")
+  NULL
+})
+
+library(ggplot2)
+
+if (!is.null(ariana_features) && !is.null(kelly_features)) {
+  ariana_df <- ariana_features %>%
+    select(danceability, energy, loudness, speechiness, acousticness, instrumentalness, liveness, valence, tempo)
+  
+  kelly_df <- kelly_features %>%
+    select(danceability, energy, loudness, speechiness, acousticness, instrumentalness, liveness, valence, tempo)
+  
+  ggplot() +
+    geom_histogram(data = ariana_df, aes(x = danceability, fill = 'Ariana Grande'), bins = 20, alpha = 0.5) +
+    geom_histogram(data = kelly_df, aes(x = danceability, fill = 'Kelly Clarkson'), bins = 20, alpha = 0.5) +
+    labs(title = 'Danceability Comparison', x = 'Danceability', y = 'Count') +
+    scale_fill_manual(name = 'Artist', values = c('Ariana Grande' = 'blue', 'Kelly Clarkson' = 'red')) +
+    theme_minimal()
+} else {
+  cat("Error: Unable to visualize data as features data frames are empty or null.\n")
+}
+
+
+```
+
+Please provide a description of your observations from the aforementioned video and your data visualization.
+
+> Insert observations here
+cat("1. **Danceability:** Ariana Grande's music generally has higher danceability compared to Kelly Clarkson's music, as seen in the histogram. This might reflect the pop and dance-oriented style of Ariana's music.\n")
+cat("2. **Energy:** Kelly Clarkson's music tends to have higher energy levels, which aligns with her powerful vocal performances and rock-influenced tracks.\n")
